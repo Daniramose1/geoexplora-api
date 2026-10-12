@@ -3,15 +3,18 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Solo permitimos consultar la ruta /paises.
-    if (request.method !== "GET" || url.pathname !== "/paises") {
+    // Ruta disponible para GeoExplora
+    if (
+      request.method !== "GET" ||
+      url.pathname !== "/paises"
+    ) {
       return Response.json(
         { error: "Ruta no encontrada" },
         { status: 404 }
       );
     }
 
-    // La clave se guarda en Cloudflare, no en GitHub.
+    // Verificar que exista la clave privada
     if (!env.REST_COUNTRIES_API_KEY) {
       return Response.json(
         { error: "Falta configurar la clave de la API" },
@@ -20,11 +23,13 @@ export default {
     }
 
     try {
+      // Consultar REST Countries v5
       const respuesta = await fetch(
         "https://api.restcountries.com/countries/v5/all",
         {
           headers: {
-            Authorization: `Bearer ${env.REST_COUNTRIES_API_KEY}`,
+            Authorization:
+              `Bearer ${env.REST_COUNTRIES_API_KEY}`,
             Accept: "application/json"
           }
         }
@@ -32,6 +37,7 @@ export default {
 
       const contenido = await respuesta.text();
 
+      // Enviar la respuesta a Flutter
       return new Response(contenido, {
         status: respuesta.status,
         headers: {
@@ -40,10 +46,13 @@ export default {
             ? "public, max-age=3600"
             : "no-store"
         }
-      );
+      });
+
     } catch (error) {
       return Response.json(
-        { error: "No se pudo conectar con REST Countries" },
+        {
+          error: "No se pudo conectar con REST Countries"
+        },
         { status: 502 }
       );
     }
